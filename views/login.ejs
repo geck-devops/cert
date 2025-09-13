@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Govt Engineering College — CSE | Admin Login</title>
+
+  <!-- Inline CSS: self-contained styling for the login page -->
+  <style>
+    /* Reset-ish */
+    *, *::before, *::after { box-sizing: border-box; }
+    html,body { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+    /* Page layout */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(180deg, #eef6ff 0%, #f7f9fc 100%);
+      color: #102a43;
+    }
+
+    .hl-container {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    /* Left brand panel */
+    .hl-brand {
+      background: linear-gradient(135deg, #ffffffcc, #f8fbff);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 12px 30px rgba(10, 30, 60, 0.08);
+      border: 1px solid rgba(15,40,80,0.06);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      align-items:center;
+    }
+    .hl-logos { display:flex; gap:12px; align-items:center; width:100%; justify-content:center; }
+    .hl-logo { height:64px; object-fit:contain; border-radius:6px; background:#fff; padding:6px; box-shadow:0 6px 14px rgba(10,20,40,.04); border:1px solid rgba(0,0,0,0.04) }
+    .hl-title { text-align:center; }
+    .hl-title h1 { margin:6px 0 2px; font-size:20px; color:#08306b; letter-spacing:0.4px; }
+    .hl-title p { margin:0; color:#355070; font-size:13px; opacity:.95; }
+
+    /* Right card (login) */
+    .hl-card {
+      background: linear-gradient(180deg,#ffffff,#fbfdff);
+      padding: 26px;
+      border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(9,30,66,0.08);
+      border: 1px solid rgba(8,42,100,0.06);
+    }
+
+    .hl-card h2 { margin:0 0 8px; font-size:20px; color:#0b3a7a; }
+    .hl-card .lead { color:#41556b; font-size:13px; margin-bottom:14px; }
+
+    /* form */
+    form { display:flex; flex-direction:column; gap:12px; }
+    label { display:block; font-size:13px; color:#244; }
+    input[type="text"], input[type="password"] {
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #e3e9f3;
+      background: #fcfeff;
+      font-size:14px;
+      outline: none;
+      transition: box-shadow .15s, border-color .15s, transform .06s;
+    }
+    input:focus { box-shadow: 0 6px 18px rgba(11,58,122,0.08); border-color:#0b5ed7; transform: translateY(-1px); }
+
+    .actions { display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:10px; }
+    .btn {
+      appearance:none; border:0; cursor:pointer; padding:9px 14px; border-radius:8px;
+      background: linear-gradient(180deg,#0b61d6,#084bb3); color:white; font-weight:600; text-decoration:none;
+      box-shadow: 0 8px 22px rgba(11,90,210,0.14);
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .link-ghost { background:transparent; border:1px solid #dbe6fb; color:#08306b; padding:8px 12px; border-radius:8px; text-decoration:none; }
+
+    .alert {
+      background:#fff0f0;
+      color:#8b2a2a;
+      border:1px solid #ffd6d6;
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:13px;
+    }
+
+    /* small footer text inside card */
+    .hl-note { font-size:12px; color:#607386; margin-top:6px; }
+
+    /* responsiveness */
+    @media (max-width: 880px) {
+      .hl-container { grid-template-columns: 1fr; max-width:440px; }
+      .hl-brand { order: -1; }
+    }
+  </style>
+</head>
+<body class="page-center">
+
+  <div class="hl-container" role="main" aria-labelledby="portal-heading">
+
+    <!-- Brand / Info panel -->
+    <aside class="hl-brand" aria-hidden="false">
+      <div class="hl-logos" aria-hidden="true">
+        <!-- replace src with your logos in public/logos/ -->
+        <img class="hl-logo" src="../public/logos/gov_karnataka_logo.png" alt="Gov of Karnataka logo" onerror="this.style.display='none'">
+        <img class="hl-logo" src="../public/logos/vtu_logo.png" alt="VTU logo" onerror="this.style.display='none'">
+      </div>
+
+      <div class="hl-title" id="portal-heading">
+        <h1>Government Engineering College</h1>
+        <p>Department of Computer Science &amp; Engineering</p>
+        <p style="margin-top:10px;font-weight:700;color:#0b3a7a">Certificate Management Portal</p>
+      </div>
+
+      <div style="text-align:center;color:#425b77;font-size:13px;margin-top:6px">
+        High-level admin console to create, verify & manage event certificates
+      </div>
+    </aside>
+
+    <!-- Login card -->
+    <section class="hl-card" aria-labelledby="login-heading">
+      <h2 id="login-heading">Admin Login</h2>
+      <div class="lead">Sign in to manage workshop & hackathon certificates</div>
+
+      <% if (error) { %>
+        <div class="alert" role="alert"><%= error %></div>
+      <% } %>
+
+      <form method="post" aria-describedby="login-desc">
+        <div id="login-desc" style="display:none">Admin sign in form</div>
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required placeholder="admin">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+
+        <div class="actions">
+          <a class="link-ghost" href="/" aria-label="Back to home">Back</a>
+          <button class="btn" type="submit">Sign in</button>
+        </div>
+
+        
+      </form>
+    </section>
+
+  </div>
+
+</body>
+</html>

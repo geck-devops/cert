@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Govt Engg College — CSE | Certificate Dashboard</title>
+
+  <!-- Inline high-level styles for immediate UI update -->
+  <style>
+    :root{
+      --accent: #0b5ed7;
+      --accent-2: #0b3a7a;
+      --muted: #6b7a90;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --success: #16a34a;
+      --danger: #ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;background:var(--bg);color:#0b2b4a}
+    .hl-admin-container{max-width:1200px;margin:28px auto;padding:18px}
+    .hl-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .hl-brand{
+      display:flex;gap:12px;align-items:center;
+    }
+    .hl-brand .logo{height:44px;width:44px;object-fit:contain;border-radius:6px;background:#fff;padding:6px;box-shadow:0 8px 20px rgba(11,30,60,0.06);}
+    .hl-brand .titles{line-height:1}
+    .hl-brand h1{margin:0;font-size:18px;color:var(--accent-2);letter-spacing:0.2px}
+    .hl-brand p{margin:0;font-size:12px;color:var(--muted)}
+
+    .hl-actions{display:flex;gap:10px;align-items:center}
+    .hl-btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;box-shadow:0 8px 24px rgba(11,90,210,0.12)}
+    .hl-btn.ghost{background:transparent;color:var(--accent-2);border:1px solid #e6eefc;font-weight:600}
+    .hl-btn.warn{background:linear-gradient(180deg,#ffb74d,#ff9800);color:#111}
+    .hl-btn.danger{background:var(--danger);box-shadow:none}
+
+    .hl-card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 14px 44px rgba(12,22,40,0.06);}
+
+    /* Table */
+    .hl-table-wrap{overflow:auto;border-radius:8px;border:1px solid #eef3fb}
+    table.hl-table{width:100%;border-collapse:collapse;min-width:900px}
+    table.hl-table thead{background:linear-gradient(90deg,#f7fbff,#fbfcff);font-size:13px;color:#08306b}
+    table.hl-table th, table.hl-table td{padding:12px 14px;border-bottom:1px solid #f1f6fb;text-align:left;vertical-align:middle}
+    table.hl-table tr:hover{background:#fbfcff}
+    .hl-thumb{height:56px;width:160px;object-fit:cover;border-radius:6px;border:1px solid #eef6ff}
+    .hl-name{font-weight:600;color:#0b3a7a}
+    .hl-muted{color:var(--muted);font-size:13px}
+    .badge{display:inline-block;padding:6px 8px;border-radius:999px;font-size:12px;font-weight:700;background:#eef7ff;color:var(--accent-2);}
+    .badge.workshop{background:#e8f7ea;color:var(--success)}
+    .badge.hack{background:#fff4e6;color:#b75b00}
+
+    .hl-actions-col a{margin-right:8px;color:var(--accent);text-decoration:none;font-weight:600;font-size:13px}
+    .hl-meta{font-size:13px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:980px) {
+      table.hl-table{min-width:760px}
+    }
+    @media (max-width:760px) {
+      .hl-topbar{flex-direction:column;align-items:flex-start;gap:12px}
+      .hl-btn{padding:8px 10px}
+    }
+  </style>
+</head>
+<body>
+  <div class="hl-admin-container">
+    <header class="hl-topbar">
+      <div class="hl-brand">
+        <img class="logo" src="/public/logos/gov_karnataka_logo.png" alt="Gov Karnataka" onerror="this.style.display='none'">
+        <div class="titles" aria-hidden="false">
+          <h1>Government Engineering College — Dept. of CSE</h1>
+          <p>Certificate Management Portal — Admin Dashboard</p>
+        </div>
+      </div>
+
+      <div class="hl-actions">
+        <a href="/generate" class="hl-btn">＋ Generate Certificate</a>
+        <a href="/download-all" class="hl-btn ghost">📦 Download All (ZIP)</a>
+        <a href="/logout" class="hl-btn danger">Logout</a>
+      </div>
+    </header>
+
+    <section class="hl-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <strong style="font-size:15px;color:#102a43">Generated Certificates</strong>
+          <div class="hl-muted" style="margin-top:4px">List of all participant certificates — preview, download or view public QR route.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <!-- simple quick filters (visual only) -->
+          <div class="hl-meta">Total: <strong><%= certificates.length %></strong></div>
+        </div>
+      </div>
+
+      <div class="hl-table-wrap">
+        <table class="hl-table" role="table" aria-label="Certificates table">
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Name</th>
+              <th>USN</th>
+              <th>College</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Issued</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!certificates || certificates.length === 0) { %>
+              <tr><td colspan="8" style="padding:28px;text-align:center;color:var(--muted)">No certificates generated yet — click “Generate Certificate” to create one.</td></tr>
+            <% } %>
+
+            <% certificates.forEach(c => { %>
+              <tr class="hl-row" id="cert-<%= c.id %>">
+                <td>
+                  <img src="/certs/<%= c.filename %>" alt="preview" class="hl-thumb" />
+                </td>
+                <td>
+                  <div class="hl-name"><%= c.name %></div>
+                  <div class="hl-muted" style="margin-top:6px">ID: <span style="font-weight:600;color:#0b3a7a"><%= c.id %></span></div>
+                </td>
+                <td><div class="hl-muted"><%= c.usn %></div></td>
+                <td><div style="max-width:200px"><%= c.college %></div></td>
+                <td>
+                  <% if ((c.type || '').toLowerCase().includes('workshop')) { %>
+                    <span class="badge workshop">WORKSHOP</span>
+                  <% } else if ((c.type || '').toLowerCase().includes('hack')) { %>
+                    <span class="badge hack">HACKATHON</span>
+                  <% } else { %>
+                    <span class="badge"><%= (c.type||'EVENT').toUpperCase() %></span>
+                  <% } %>
+                </td>
+                <td><div class="hl-meta"><%= c.date %></div></td>
+                <td><div class="hl-meta"><%= c.created_at %></div></td>
+                <td class="hl-actions-col">
+                  <a href="/certs/<%= c.filename %>" target="_blank" title="Open certificate">Open</a>
+                  |
+                  <a href="/download/<%= c.id %>" title="Download certificate">Download</a>
+                  |
+                  <a href="/view/<%= c.id %>" target="_blank" title="Public QR view">QR View</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

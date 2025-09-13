@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Certificate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg1: #ffffff;
+      --bg2: #fafbff;
+      --accent: #0b5ed7;
+      --accent-dark: #052c65;
+      --muted: #5a6779;
+    }
+    body {
+      margin:0;
+      padding:20px;
+      background:linear-gradient(180deg,#f0f4fb 0%, #eef6ff 100%);
+      font-family: "Georgia", "Times New Roman", serif;
+      color:#222;
+    }
+    .wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+
+    .paper {
+      width:1280px; height:820px;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      border:12px double var(--accent-dark);
+      border-radius:12px;
+      box-shadow:0 12px 50px rgba(11,30,60,0.15);
+      padding:40px;
+      box-sizing:border-box;
+      position:relative;
+    }
+
+    .header { display:flex; align-items:center; justify-content:space-between; }
+    .hdr-center { flex:1; text-align:center; }
+    .college-line {
+      font-size:20px; font-weight:700; color:var(--accent-dark);
+      text-transform:uppercase; letter-spacing:1px;
+    }
+    .dept-line { font-size:16px; color:var(--muted); margin-top:4px; }
+
+    img.logo { height:90px; object-fit:contain; }
+
+    h1.title {
+      margin:14px 0 6px;
+      font-size:40px; color:var(--accent);
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+    }
+
+    p.subtitle { font-size:18px; color:#333; margin:0; }
+
+    .body { margin-top:40px; text-align:center; padding:0 50px; }
+    .lead { font-size:20px; margin-bottom:16px; }
+    .participant { font-size:30px; font-weight:700; color:var(--accent-dark); }
+    .usn { font-size:18px; font-weight:500; color:var(--muted); }
+    .meta {
+      margin-top:28px; font-size:20px; line-height:1.6; color:#222;
+    }
+    .still-para {
+      margin-top:26px; font-size:20px; line-height:1.6; color:#333;
+      font-style:italic;
+      text-align:justify;
+      padding:0 40px;
+    }
+
+    .signs {
+      display:flex; justify-content:space-between;
+      margin-top:60px; padding:0 80px;
+    }
+    .sig { text-align:center; }
+    .sig .line { border-top:2px solid #333; margin-bottom:6px; width:260px; margin:auto; }
+    .sig .title { font-size:16px; font-weight:600; color:#222; }
+
+    .qr-wrap {
+      position:absolute; right:40px; bottom:40px; text-align:center;
+    }
+    .qr-wrap img {
+      width:150px; height:150px; border:3px solid var(--accent-dark);
+      border-radius:8px; background:#fff; padding:4px;
+    }
+    .qr-wrap div { margin-top:6px; font-size:13px; color:var(--muted); }
+
+    .footer {
+      position:absolute; left:40px; bottom:40px; font-size:14px; color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="paper">
+      <div class="header">
+        <img class="logo" src="/public/logos/gov_karnataka_logo.png" alt="Government Logo" />
+        <div class="hdr-center">
+          <div class="college-line">Government Engineering College</div>
+          <div class="dept-line">Department of Computer Science &amp; Engineering</div>
+          <h1 class="title">Certificate of Participation</h1>
+          <p class="subtitle">This is to certify the achievement of the participant named below</p>
+        </div>
+        <img class="logo" src="/public/logos/vtu_logo.png" alt="VTU Logo" />
+      </div>
+
+      <div class="body">
+        <div class="lead">This is to certify that</div>
+        <div class="participant"><%= name %></div>
+        <div class="usn">(USN: <%= usn %>)</div>
+
+        <div class="meta">
+          has successfully participated in the <strong><%= type %></strong> organized by  
+          <strong><%= college %></strong> on <strong><%= date %></strong>.  
+          The event was conducted for a duration of <strong><%= hours %> hour<%= (hours && parseInt(hours) > 1) ? 's' : '' %></strong>.
+        </div>
+
+        <!-- Added still paragraph -->
+        <div class="still-para">
+          This certificate is awarded as a recognition of the student’s active participation and commitment 
+          towards enhancing their technical knowledge and professional development. It stands as a formal 
+          acknowledgment of the skills and dedication demonstrated during the course of the event.
+        </div>
+
+        <div class="signs">
+          <div class="sig">
+            <div class="line"></div>
+            <div class="title">Head of Department</div>
+          </div>
+          <div class="sig">
+            <div class="line"></div>
+            <div class="title">Principal</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-wrap">
+        <img src="<%= qrDataURL %>" alt="QR Code" />
+        <div>Scan to Verify</div>
+      </div>
+
+      <div class="footer">
+        Certificate ID: <strong><%= typeof certId !== 'undefined' ? certId : (new Date()).getTime().toString(36).toUpperCase() %></strong>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

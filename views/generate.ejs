@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Govt Engg College — Generate Certificate</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Inline HL styles (self-contained for immediate use) -->
+  <style>
+    :root{
+      --accent:#0b5ed7;
+      --accent-2:#0b3a7a;
+      --muted:#6b7a90;
+      --bg:#f6f8fb;
+      --card:#fff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;background:var(--bg);color:#0b2b4a}
+    .hl-wrap{max-width:1100px;margin:28px auto;padding:18px}
+    .hl-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .hl-topbar .titles{line-height:1}
+    .hl-topbar h1{margin:0;font-size:20px;color:var(--accent-2)}
+    .hl-topbar p{margin:0;font-size:13px;color:var(--muted)}
+    .hl-actions{display:flex;gap:10px;align-items:center}
+    .hl-btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
+    .hl-btn.ghost{background:transparent;color:var(--accent-2);border:1px solid #e6eefc}
+    .hl-card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 14px 44px rgba(12,22,40,0.06)}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+
+    /* form styles */
+    form.hl-form{display:flex;flex-direction:column;gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    label{font-size:13px;color:#244}
+    input[type=text], input[type=date], input[type=number]{
+      width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e8eef8;background:#fcfeff;font-size:14px;
+      transition:box-shadow .12s, border-color .12s;
+    }
+    input:focus{box-shadow:0 8px 20px rgba(11,58,122,.06);border-color:var(--accent)}
+    .row{display:flex;gap:12px}
+    .row .col{flex:1}
+
+    .small-note{font-size:12px;color:var(--muted);margin-top:6px}
+
+    .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+    .actions .hl-btn.secondary{background:#eef6ff;color:var(--accent-2);border:1px solid #dbeafe}
+
+    /* preview */
+    .preview-card{padding:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:10px;border:1px solid #eef6fb}
+    .preview-title{font-size:13px;color:#0b3a7a;font-weight:700;margin-bottom:8px}
+    .preview-item{font-size:14px;color:#102a43;margin-bottom:6px}
+    .preview-muted{font-size:13px;color:var(--muted)}
+
+    /* helper */
+    .hint{font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <div class="hl-wrap" role="main">
+    <header class="hl-topbar" aria-labelledby="page-title">
+      <div class="titles">
+        <h1 id="page-title">Generate Certificate</h1>
+        <p>Government Engineering College — Dept. of CSE · Certificate Management Portal</p>
+      </div>
+      <div class="hl-actions">
+        <a href="/admin" class="hl-btn ghost" aria-label="Back to dashboard">← Back</a>
+      </div>
+    </header>
+
+    <section class="hl-card">
+      <div class="grid">
+        <!-- Form column -->
+        <div>
+          <form class="hl-form" method="post" id="genForm" autocomplete="off" novalidate>
+            <div class="field">
+              <label for="name">Student Name</label>
+              <input id="name" name="name" type="text" placeholder="Full name " required />
+            </div>
+
+            <div class="field row">
+              <div class="col">
+                <label for="usn">USN</label>
+                <input id="usn" name="usn" type="text" placeholder="2GP22CS001" required />
+              </div>
+              <div class="col">
+                <label for="hours">Duration (hours)</label>
+                <input id="hours" name="hours" type="number" min="0" value="4" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="college">College</label>
+              <input id="college" name="college" type="text" value="Government College of Engineering, Example" required />
+              <div class="small-note">This text will appear on the certificate header. Replace with your college full name if needed.</div>
+            </div>
+
+            <div class="field row">
+              <div class="col">
+                <label for="type">Event Type</label>
+                <input id="type" name="type" type="text" placeholder="Workshop / Hackathon / Seminar" required />
+              </div>
+              <div class="col">
+                <label for="date">Date</label>
+                <input id="date" name="date" type="date" required />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="hl-btn secondary" id="resetBtn">Reset</button>
+              <button type="submit" class="hl-btn">Generate Certificate</button>
+            </div>
+
+            <div class="small-note">Tip: After generation, the certificate PNG and public QR-view will be available in Admin dashboard.</div>
+          </form>
+        </div>
+
+        <!-- Preview column -->
+        <aside>
+          <div class="preview-card" aria-live="polite">
+            <div class="preview-title">Live Preview</div>
+
+            <div class="preview-item"><strong id="pv-name">[Student Name]</strong></div>
+            <div class="preview-item preview-muted">USN: <span id="pv-usn">[USN]</span></div>
+            <div style="height:1px;background:#eef6fb;margin:10px 0;border-radius:2px;"></div>
+
+            <div class="preview-item">Event: <span id="pv-type">[Event Type]</span></div>
+            <div class="preview-item preview-muted">Date: <span id="pv-date">[Date]</span></div>
+            <div class="preview-item preview-muted">Duration: <span id="pv-hours">[X] hours</span></div>
+
+            <div style="height:1px;background:#eef6fb;margin:10px 0;border-radius:2px;"></div>
+
+            <div class="preview-item preview-muted">College</div>
+            <div style="font-weight:700;color:#0b3a7a" id="pv-college">Government College of Engineering, Example</div>
+
+            <div style="margin-top:14px" class="hint">This preview is illustrative only. The final certificate design (logo placement, QR, signatures) will be produced on generation.</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <!-- small script: set default date and live preview -->
+  <script>
+    (function(){
+      // set default date to today
+      const dateInput = document.getElementById('date');
+      if (dateInput && !dateInput.value) {
+        const t = new Date();
+        const y = t.getFullYear();
+        const m = String(t.getMonth()+1).padStart(2,'0');
+        const d = String(t.getDate()).padStart(2,'0');
+        dateInput.value = `${y}-${m}-${d}`;
+      }
+
+      // live preview mapping
+      const map = [
+        ['name', 'pv-name', v => v || '[Student Name]'],
+        ['usn', 'pv-usn', v => v || '[USN]'],
+        ['college', 'pv-college', v => v || 'Government College of Engineering, Example'],
+        ['type', 'pv-type', v => v || '[Event Type]'],
+        ['date', 'pv-date', v => v || '[Date]'],
+        ['hours', 'pv-hours', v => (v === '' ? '[X] hours' : (v + ' hour' + (parseInt(v) === 1 ? '' : 's')))]
+      ];
+
+      function updatePreview(){
+        map.forEach(([src, tgt, f])=>{
+          const el = document.getElementById(src);
+          const out = document.getElementById(tgt);
+          if (!out) return;
+          let val = el ? el.value : '';
+          out.textContent = f(val);
+        });
+      }
+
+      // attach listeners
+      map.forEach(([src])=>{
+        const el = document.getElementById(src);
+        if (el) el.addEventListener('input', updatePreview);
+      });
+
+      // reset button
+      document.getElementById('resetBtn').addEventListener('click', function(){
+        document.getElementById('genForm').reset();
+        // reset date to today again
+        if (dateInput) {
+          const t = new Date();
+          dateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+        }
+        updatePreview();
+      });
+
+      // initialize preview immediately
+      updatePreview();
+    })();
+  </script>
+</body>
+</html>

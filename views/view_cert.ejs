@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Congratulations</title>
+  <link rel="stylesheet" href="/public/css/style.css">
+  <script defer src="/public/js/view-anim.js"></script>
+  <style>
+    body {
+      margin:0;
+      font-family: "Segoe UI", "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+      color:#222;
+    }
+    .view-wrap {
+      text-align:center;
+      padding:40px 20px;
+      max-width:960px;
+      margin:auto;
+      position:relative;
+    }
+    .confetti {
+      position:fixed; left:0; right:0; top:0; bottom:0;
+      pointer-events:none; z-index:20;
+    }
+    .congrats {
+      font-size:40px;
+      font-weight:700;
+      margin:22px 0 10px;
+      color:#0b5ed7;
+      letter-spacing:1px;
+      animation: fadeInDown 0.8s ease;
+    }
+    .sub {
+      font-size:20px;
+      color:#444;
+      margin-bottom:24px;
+      animation: fadeIn 1s ease;
+    }
+    .card-img {
+      max-width:90%;
+      border-radius:12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12);
+      transform-origin:center;
+      background:#fff;
+      padding:8px;
+    }
+    .btns {
+      margin-top:26px;
+      display:flex;
+      justify-content:center;
+      gap:16px;
+    }
+    .btn {
+      display:inline-block;
+      padding:12px 26px;
+      border-radius:8px;
+      text-decoration:none;
+      font-weight:600;
+      font-size:16px;
+      background:#0b5ed7;
+      color:#fff;
+      box-shadow:0 4px 14px rgba(11,94,215,0.3);
+      transition:all 0.3s ease;
+    }
+    .btn:hover {
+      background:#084298;
+      transform:translateY(-2px);
+    }
+    .btn.ghost {
+      background:transparent;
+      color:#0b5ed7;
+      border:2px solid #0b5ed7;
+      box-shadow:none;
+    }
+    .btn.ghost:hover {
+      background:#0b5ed7;
+      color:#fff;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from { opacity:0; transform:translateY(-20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to { opacity:1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="view-wrap">
+    <div id="confetti" class="confetti"></div>
+    <div class="congrats">🎉 Congratulations, <%= cert.name %>! 🎉</div>
+    <div class="sub">You have successfully completed: <strong><%= cert.type %></strong></div>
+
+    <div>
+      <img id="certImage" class="card-img" src="/certs/<%= cert.filename %>" alt="Certificate" />
+    </div>
+
+    <div class="btns">
+      <a href="/certs/<%= cert.filename %>" download class="btn">⬇ Download Certificate</a>
+      <a href="/" class="btn ghost">Close</a>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', ()=> {
+      // scale animation
+      const img = document.getElementById('certImage');
+      img.style.transform = 'scale(0.92)';
+      img.style.transition = 'transform 700ms cubic-bezier(.2,.9,.3,1)';
+      setTimeout(()=> img.style.transform = 'scale(1)', 150);
+
+      // confetti (from view-anim.js)
+      if (window.startConfetti) startConfetti();
+    });
+  </script>
+</body>
+</html>
