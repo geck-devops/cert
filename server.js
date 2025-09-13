@@ -5,17 +5,19 @@ const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const puppeteer = require('puppeteer-core'); // full puppeteer
+const puppeteer = require('puppeteer-core'); // use core for system Chromium
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 const { randomUUID } = require('crypto');
+const os = require('os');
+const child_process = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'db.sqlite');
 const CERTS_DIR = path.join(__dirname, 'certs');
 
-// small sleep helper
+// sleep helper
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Ensure certs folder exists
@@ -60,6 +62,27 @@ function requireLogin(req, res, next) {
   res.redirect('/login');
 }
 
+// Detect system Chromium on Render/Linux
+function findChromium() {
+  const candidates = [
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/snap/bin/chromium',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable'
+  ];
+
+  for (const p of candidates) if (fs.existsSync(p)) return p;
+
+  // fallback: try `which chromium-browser` etc
+  try {
+    const whichOut = child_process.execSync('which chromium-browser || which chromium || which google-chrome', { encoding: 'utf-8', stdio: ['pipe','pipe','ignore'], shell: true }).trim();
+    if (whichOut && fs.existsSync(whichOut)) return whichOut;
+  } catch (e) {}
+
+  return null;
+}
+
 // Routes
 app.get('/', (req, res) => res.redirect('/login'));
 app.get('/login', (req, res) => res.render('login', { error: null }));
@@ -72,14 +95,12 @@ app.post('/login', (req, res) => {
   res.render('login', { error: 'Invalid credentials' });
 });
 app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/login')));
-
 app.get('/admin', requireLogin, (req, res) => {
   db.all('SELECT id,name,usn,college,type,date,created_at,filename FROM certificates ORDER BY created_at DESC', [], (err, rows) => {
     if (err) return res.status(500).send('DB error');
     res.render('admin', { certificates: rows });
   });
 });
-
 app.get('/generate', requireLogin, (req, res) => res.render('generate'));
 
 // Generate certificate
@@ -91,22 +112,22 @@ app.post('/generate', requireLogin, async (req, res) => {
     const filename = `${id}.png`;
     const qrPublicUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
 
-    // QR code
     const qrDataURL = await QRCode.toDataURL(qrPublicUrl, { margin: 1, width: 300 });
 
-    // Render HTML template
     const html = await new Promise((resolve, reject) => {
       app.render('cert_template', { name, usn, college, type, date, hours, qrDataURL }, (err, str) => {
         if (err) reject(err); else resolve(str);
       });
     });
 
-    // Launch Puppeteer
-    
+    // detect Chromium
+    const executablePath = findChromium();
+    if (!executablePath) {
+      return res.status(500).send('No Chromium/Chrome found on server. Set CHROME_PATH environment variable if needed.');
+    }
 
-// Inside /generate route
     browser = await puppeteer.launch({
-      executablePath: '/usr/bin/google-chrome', // Render’s system Chrome
+      executablePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       headless: true
     });
@@ -119,14 +140,13 @@ app.post('/generate', requireLogin, async (req, res) => {
     const filePath = path.join(CERTS_DIR, filename);
     await page.screenshot({ path: filePath, fullPage: true, omitBackground: false });
 
-    // Insert into DB
     db.run(`INSERT INTO certificates (id,name,usn,college,type,date,hours,filename,created_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'))`,
       [id, name, usn, college, type, date, hours || 0, filename], err => { if (err) console.error(err); });
 
     res.redirect('/admin');
   } catch (err) {
     console.error('Generate error', err);
-    res.status(500).send('Failed to generate certificate: ' + (err && err.message ? err.message : err));
+    res.status(500).send('Failed to generate certificate: ' + (err.message || err));
   } finally {
     if (browser) try { await browser.close(); } catch (e) {}
   }
