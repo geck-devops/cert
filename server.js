@@ -102,10 +102,15 @@ app.post('/generate', requireLogin, async (req, res) => {
     });
 
     // Launch Puppeteer
+    
+
+// Inside /generate route
     browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: '/usr/bin/google-chrome', // Render’s system Chrome
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       headless: true
     });
+
     const page = await browser.newPage();
     await page.setViewport({ width: 1400, height: 900, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: 'networkidle0' });
