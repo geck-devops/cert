@@ -5,7 +5,7 @@ const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const puppeteer = require('puppeteer'); // <-- full puppeteer
+const puppeteer = require('puppeteer'); // full puppeteer
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 const { randomUUID } = require('crypto');
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'db.sqlite');
 const CERTS_DIR = path.join(__dirname, 'certs');
 
-// small portable sleep helper
+// small sleep helper
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Ensure certs folder exists
@@ -32,7 +32,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'replace_with_secure_secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 2 * 60 * 60 * 1000 } // 2 hours
+  cookie: { maxAge: 2 * 60 * 60 * 1000 }
 }));
 
 // Admin credentials
@@ -72,12 +72,14 @@ app.post('/login', (req, res) => {
   res.render('login', { error: 'Invalid credentials' });
 });
 app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/login')));
+
 app.get('/admin', requireLogin, (req, res) => {
   db.all('SELECT id,name,usn,college,type,date,created_at,filename FROM certificates ORDER BY created_at DESC', [], (err, rows) => {
     if (err) return res.status(500).send('DB error');
     res.render('admin', { certificates: rows });
   });
 });
+
 app.get('/generate', requireLogin, (req, res) => res.render('generate'));
 
 // Generate certificate
@@ -99,12 +101,11 @@ app.post('/generate', requireLogin, async (req, res) => {
       });
     });
 
-    // Launch Puppeteer (bundled Chromium)
+    // Launch Puppeteer
     browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       headless: true
     });
-
     const page = await browser.newPage();
     await page.setViewport({ width: 1400, height: 900, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -115,9 +116,7 @@ app.post('/generate', requireLogin, async (req, res) => {
 
     // Insert into DB
     db.run(`INSERT INTO certificates (id,name,usn,college,type,date,hours,filename,created_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'))`,
-      [id, name, usn, college, type, date, hours || 0, filename], err => {
-        if (err) console.error(err);
-      });
+      [id, name, usn, college, type, date, hours || 0, filename], err => { if (err) console.error(err); });
 
     res.redirect('/admin');
   } catch (err) {
