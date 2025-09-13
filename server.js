@@ -5,19 +5,17 @@ const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const puppeteer = require('puppeteer-core'); // use core for system Chromium
+const puppeteer = require('puppeteer'); // full puppeteer
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 const { randomUUID } = require('crypto');
-const os = require('os');
-const child_process = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'db.sqlite');
 const CERTS_DIR = path.join(__dirname, 'certs');
 
-// sleep helper
+// small sleep helper
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Ensure certs folder exists
@@ -62,27 +60,6 @@ function requireLogin(req, res, next) {
   res.redirect('/login');
 }
 
-// Detect system Chromium on Render/Linux
-function findChromium() {
-  const candidates = [
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/snap/bin/chromium',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable'
-  ];
-
-  for (const p of candidates) if (fs.existsSync(p)) return p;
-
-  // fallback: try `which chromium-browser` etc
-  try {
-    const whichOut = child_process.execSync('which chromium-browser || which chromium || which google-chrome', { encoding: 'utf-8', stdio: ['pipe','pipe','ignore'], shell: true }).trim();
-    if (whichOut && fs.existsSync(whichOut)) return whichOut;
-  } catch (e) {}
-
-  return null;
-}
-
 // Routes
 app.get('/', (req, res) => res.redirect('/login'));
 app.get('/login', (req, res) => res.render('login', { error: null }));
@@ -120,14 +97,8 @@ app.post('/generate', requireLogin, async (req, res) => {
       });
     });
 
-    // detect Chromium
-    const executablePath = findChromium();
-    if (!executablePath) {
-      return res.status(500).send('No Chromium/Chrome found on server. Set CHROME_PATH environment variable if needed.');
-    }
-
+    // Launch Puppeteer (bundled Chromium)
     browser = await puppeteer.launch({
-      executablePath,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       headless: true
     });
