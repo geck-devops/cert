@@ -5,7 +5,7 @@ const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const puppeteer = require('puppeteer'); // full puppeteer
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 const { randomUUID } = require('crypto');
@@ -14,9 +14,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'db.sqlite');
 const CERTS_DIR = path.join(__dirname, 'certs');
-
-// small sleep helper
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Ensure certs folder exists
 if (!fs.existsSync(CERTS_DIR)) fs.mkdirSync(CERTS_DIR, { recursive: true });
@@ -32,10 +29,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'replace_with_secure_secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 2 * 60 * 60 * 1000 }
+  cookie: { maxAge: 2 * 60 * 60 * 1000 } // 2 hours
 }));
 
-// Admin credentials
+// Simple admin credentials
 const ADMIN = { username: process.env.ADMIN_USER || 'admin', password: process.env.ADMIN_PASS || 'admin123' };
 
 // SQLite init
@@ -72,54 +69,71 @@ app.post('/login', (req, res) => {
   res.render('login', { error: 'Invalid credentials' });
 });
 app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/login')));
+
 app.get('/admin', requireLogin, (req, res) => {
   db.all('SELECT id,name,usn,college,type,date,created_at,filename FROM certificates ORDER BY created_at DESC', [], (err, rows) => {
     if (err) return res.status(500).send('DB error');
     res.render('admin', { certificates: rows });
   });
 });
+
 app.get('/generate', requireLogin, (req, res) => res.render('generate'));
 
-// Generate certificate
+// Generate certificate (Canvas-based)
 app.post('/generate', requireLogin, async (req, res) => {
-  let browser;
   try {
     const { name, usn, college, type, date, hours } = req.body;
     const id = randomUUID();
     const filename = `${id}.png`;
     const qrPublicUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
 
-    const qrDataURL = await QRCode.toDataURL(qrPublicUrl, { margin: 1, width: 300 });
+    // Create QR code data URL
+    const qrDataURL = await QRCode.toDataURL(qrPublicUrl, { margin: 1, width: 250 });
+    const qrImage = await loadImage(qrDataURL);
 
-    const html = await new Promise((resolve, reject) => {
-      app.render('cert_template', { name, usn, college, type, date, hours, qrDataURL }, (err, str) => {
-        if (err) reject(err); else resolve(str);
-      });
-    });
+    // Canvas setup
+    const width = 1400;
+    const height = 900;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
 
-    // Launch Puppeteer (bundled Chromium)
-    browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      headless: true
-    });
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1400, height: 900, deviceScaleFactor: 2 });
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    await sleep(300);
+    // Certificate Title
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 60pt Sans';
+    ctx.fillText('Certificate of Completion', 100, 150);
 
+    // Name
+    ctx.font = '50pt Sans';
+    ctx.fillText(name, 100, 300);
+
+    // Details
+    ctx.font = '30pt Sans';
+    ctx.fillText(`USN: ${usn}`, 100, 400);
+    ctx.fillText(`College: ${college}`, 100, 450);
+    ctx.fillText(`Type: ${type}`, 100, 500);
+    ctx.fillText(`Date: ${date}`, 100, 550);
+    ctx.fillText(`Hours: ${hours || 0}`, 100, 600);
+
+    // QR code
+    ctx.drawImage(qrImage, width - 350, height - 350, 300, 300);
+
+    // Save to file
     const filePath = path.join(CERTS_DIR, filename);
-    await page.screenshot({ path: filePath, fullPage: true, omitBackground: false });
+    const buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(filePath, buffer);
 
+    // Insert into DB
     db.run(`INSERT INTO certificates (id,name,usn,college,type,date,hours,filename,created_at) VALUES (?,?,?,?,?,?,?,?,datetime('now'))`,
-      [id, name, usn, college, type, date, hours || 0, filename], err => { if (err) console.error(err); });
+      [id, name, usn, college, type, date, hours || 0, filename]);
 
     res.redirect('/admin');
   } catch (err) {
     console.error('Generate error', err);
     res.status(500).send('Failed to generate certificate: ' + (err.message || err));
-  } finally {
-    if (browser) try { await browser.close(); } catch (e) {}
   }
 });
 
@@ -149,7 +163,7 @@ app.get('/download-all', requireLogin, (req, res) => {
   });
 });
 
-// View certificate
+// Public certificate viewing
 app.get('/view/:id', (req, res) => {
   const id = req.params.id;
   db.get('SELECT * FROM certificates WHERE id = ?', [id], (err, row) => {
